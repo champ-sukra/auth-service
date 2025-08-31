@@ -3,7 +3,7 @@
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Project Overview
-This is a Django-based authentication and authorization microservice that provides REST API endpoints for user management, role-based access control (RBAC), and Active Directory integration.
+This is a Django-based authentication and authorization microservice that provides REST API endpoints for user management, role-based access control (RBAC), and SQL Server integration. This is a backend-only service designed to be consumed by frontend applications.
 
 ## Required Dependencies
 Add these to requirements.txt:
@@ -47,23 +47,42 @@ python manage.py collectstatic
 
 ## Project Architecture
 
-### Target Structure
+### Current Structure
 ```
 auth-service/
 ├── manage.py
 ├── requirements.txt
 ├── Dockerfile
 ├── .env.example
-├── auth_service/           # Main project directory
+├── CLAUDE.md
+├── auth-service/           # Main Django project directory
 │   ├── __init__.py
 │   ├── settings.py
 │   ├── urls.py
-│   └── wsgi.py
+│   ├── wsgi.py
+│   └── asgi.py
 ├── apps/                   # Django apps
 │   ├── __init__.py
-│   ├── authentication/     # JWT auth endpoints
-│   └── users/             # User management & RBAC
-└── tests/                 # Test modules
+│   ├── authentication/     # JWT auth endpoints & views
+│   │   ├── __init__.py
+│   │   ├── apps.py
+│   │   ├── serializers.py
+│   │   ├── views.py
+│   │   └── urls.py
+│   └── users/             # User management & RBAC models
+│       ├── __init__.py
+│       ├── apps.py
+│       ├── models.py
+│       ├── serializers.py
+│       ├── views.py
+│       ├── urls.py
+│       ├── admin.py
+│       └── management/commands/create_default_roles.py
+├── tests/                 # Test modules
+│   ├── __init__.py
+│   ├── test_authentication.py
+│   └── test_users.py
+└── templates/             # Django templates (minimal)
 ```
 
 ### Core Models Required
@@ -130,13 +149,14 @@ DATABASES = {
 ```
 DEBUG=True
 SECRET_KEY=your-secret-key
+USE_SQLITE=True
 DB_SERVER=localhost
 DB_NAME=auth_db
 DB_USER=sa
 DB_PASSWORD=your-password
 DB_PORT=1433
 ALLOWED_HOSTS=localhost,127.0.0.1
-CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
+CORS_ALLOWED_ORIGINS=*
 ```
 
 ### Expected API Response Formats
@@ -166,63 +186,107 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
 }
 ```
 
-## Configuration Requirements
-- SQL Server database configuration (primary)
-- JWT token settings
-- CORS settings for frontend integration
-- Basic logging configuration
-- Docker configuration for deployment
+## Docker Deployment
 
-## Development Standards
-- Use Django REST Framework best practices
-- Follow PEP 8 coding standards
-- Add basic docstrings and type hints
-- Include basic error handling
-- Set up proper database migrations
-- Ensure all endpoints return consistent JSON responses
-- Add basic validation using DRF serializers
+### Build and Run with Docker
+```bash
+# Build Docker image
+docker build -t auth-service .
 
-## Setup Instructions
+# Run container (SQLite)
+docker run -p 8000:8000 auth-service
+
+# Run container (SQL Server)
+docker run -p 8000:8000 \
+  -e USE_SQLITE=False \
+  -e DB_SERVER=your-server \
+  -e DB_NAME=auth_db \
+  -e DB_USER=your-user \
+  -e DB_PASSWORD=your-pass \
+  auth-service
+```
+
+## Default Credentials
+- **Username:** `admin`
+- **Password:** `admin123`  
+- **Email:** `admin@example.com`
+- **Role:** ADMIN (full permissions)
+
+## Development Notes
+- **Backend-only** REST API microservice (no frontend)
+- JWT token-based authentication with role claims
+- Role-Based Access Control (RBAC) system
+- SQL Server primary database with SQLite development fallback
+- Docker deployment configuration included
+- Comprehensive test coverage for all endpoints
+- CORS configured for API consumption by external frontend applications
+
+## Installation & Setup
+
+### Prerequisites
+- Python 3.11+
+- Virtual environment (already created in `.venv/`)
+- For SQL Server: unixODBC driver on macOS (`brew install unixodbc`)
 
 ### 1. Install Dependencies
 ```bash
+# Activate virtual environment
 source .venv/bin/activate
+
+# Install Python packages
 pip install -r requirements.txt
 ```
 
-### 2. Database Setup
+### 2. Database Setup (SQLite - Development)
 ```bash
-# Create migrations
+# Create migrations for users app
 python manage.py makemigrations users
 
-# Apply migrations
+# Apply all migrations
 python manage.py migrate
 
 # Create default roles and permissions
 python manage.py create_default_roles
 
-# Create superuser (optional)
+# Create superuser
 python manage.py createsuperuser
+# Or use existing: admin/admin123 (already created)
 ```
 
-### 3. For SQL Server (Production)
-Create a `.env` file (copy from `.env.example`) and set:
-```
-USE_SQLITE=False
-DB_SERVER=your-sql-server
-DB_NAME=auth_db
-DB_USER=your-username
-DB_PASSWORD=your-password
-```
-
-Install unixODBC on macOS if needed:
+### 3. Database Setup (SQL Server - Production)
 ```bash
-brew install unixodbc
+# Copy environment template
+cp .env.example .env
+
+# Edit .env and set:
+# USE_SQLITE=False
+# DB_SERVER=your-sql-server-host
+# DB_NAME=auth_db
+# DB_USER=your-username  
+# DB_PASSWORD=your-password
+
+# Run migrations on SQL Server
+python manage.py migrate
+python manage.py create_default_roles
 ```
 
-### 4. Run the Server
+### 4. Start the Server
 ```bash
+# Development server
 python manage.py runserver
+
+# Or specify host/port
+python manage.py runserver 0.0.0.0:8000
+```
+
+### 5. Test Installation
+```bash
+# Run tests
+python manage.py test
+
+# Check API endpoints are working
+curl http://localhost:8000/api/roles/
+# Should return: {"detail":"Authentication credentials were not provided."}
 ```
 
 ## Testing the API
