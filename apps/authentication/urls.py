@@ -1,6 +1,6 @@
 from django.urls import path
+from .AuthController import login_view  # Proper sequence diagram structure
 from .views import (
-    login_view,
     CustomTokenObtainPairView,
     CustomTokenRefreshView,
     logout_view,
@@ -10,7 +10,7 @@ from .views import (
 )
 
 urlpatterns = [
-    # Main login endpoint following OpenAPI specification
+    # Main login endpoint following sequence diagram (AuthController)
     path('login/', login_view, name='login'),
 
     # Alternative JWT endpoints (for backward compatibility)

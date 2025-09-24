@@ -46,26 +46,16 @@ alt password invalid
     end note
 end
 AuthService -> AuthService: generateJWTToken
-AuthService -> UserRepository: getUserRoles
-UserRepository --> AuthService: roles
-Client <-- AuthService:
+AuthController <-- AuthService:
+Client <-- AuthController:
 note right of Client
 {
   "code": "success",
-  "data": {
-      "access_token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
-      "token_type": "Bearer",
-      "expires_in": 3600,
-      "user": {
-        "id": 1,
-        "username": "john_doe",
-        "email": "john@example.com",
-        "first_name": "John",
-        "last_name": "Doe",
-        "roles": ["ADMIN"]
-      }
-  }
+  "data": LoginResponse
 }
+
+**LoginResponse Schema:**
+See: ./resources/openapi/components/LoginResponse.yaml
 end note
 
 @enduml
