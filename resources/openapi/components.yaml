@@ -1,0 +1,71 @@
+components:
+  schemas:
+    # Core Entity Schemas
+    User:
+      $ref: './components/User.yaml'
+    Role:
+      $ref: './components/Role.yaml'
+    Permission:
+      $ref: './components/Permission.yaml'
+
+    # Authentication Request/Response Schemas
+    LoginRequest:
+      $ref: './components/LoginRequest.yaml'
+    LoginResponse:
+      $ref: './components/LoginResponse.yaml'
+
+    # Profile Request/Response Schemas
+    ProfileResponse:
+      $ref: './components/ProfileResponse.yaml'
+    UpdateProfileRequest:
+      $ref: './components/UpdateProfileRequest.yaml'
+    UpdateProfileResponse:
+      $ref: './components/UpdateProfileResponse.yaml'
+    UsersListResponse:
+      $ref: './components/UsersListResponse.yaml'
+
+    # Password Management Request Schemas
+    PasswordResetRequest:
+      $ref: './components/PasswordResetRequest.yaml'
+    PasswordResetConfirmRequest:
+      $ref: './components/PasswordResetConfirmRequest.yaml'
+    ChangePasswordRequest:
+      $ref: './components/ChangePasswordRequest.yaml'
+
+    # Role Management Request/Response Schemas
+    RoleResponse:
+      $ref: './components/RoleResponse.yaml'
+    RolesListResponse:
+      $ref: './components/RolesListResponse.yaml'
+    CreateRoleRequest:
+      $ref: './components/CreateRoleRequest.yaml'
+    UpdateRoleRequest:
+      $ref: './components/UpdateRoleRequest.yaml'
+
+    # Permission Management Request/Response Schemas
+    PermissionResponse:
+      $ref: './components/PermissionResponse.yaml'
+    PermissionsListResponse:
+      $ref: './components/PermissionsListResponse.yaml'
+    CreatePermissionRequest:
+      $ref: './components/CreatePermissionRequest.yaml'
+    UpdatePermissionRequest:
+      $ref: './components/UpdatePermissionRequest.yaml'
+
+    # User Role/Permission Response Schemas
+    UserRolesResponse:
+      $ref: './components/UserRolesResponse.yaml'
+    UserPermissionsResponse:
+      $ref: './components/UserPermissionsResponse.yaml'
+    RolePermissionsResponse:
+      $ref: './components/RolePermissionsResponse.yaml'
+
+    # Assignment Request Schemas
+    AssignRolesRequest:
+      $ref: './components/AssignRolesRequest.yaml'
+    AssignPermissionsRequest:
+      $ref: './components/AssignPermissionsRequest.yaml'
+
+    # Error Response Schema
+    ErrorResponse:
+      $ref: './components/ErrorResponse.yaml'

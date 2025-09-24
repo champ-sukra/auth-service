@@ -4,10 +4,82 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
+from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .serializers import CustomTokenObtainPairSerializer, UserProfileSerializer, ChangePasswordSerializer
+from .serializers import (
+    LoginRequestSerializer, CustomTokenObtainPairSerializer,
+    UserProfileSerializer, ChangePasswordSerializer,
+    ErrorResponseSerializer, SuccessResponseSerializer
+)
+from .services import AuthenticationService
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
 
 User = get_user_model()
+
+
+@swagger_auto_schema(
+    method='post',
+    request_body=LoginRequestSerializer,
+    responses={
+        200: openapi.Response('Login successful', SuccessResponseSerializer),
+        400: openapi.Response('Login failed', ErrorResponseSerializer),
+        500: openapi.Response('Server error', ErrorResponseSerializer),
+    },
+    operation_description="Authenticate user with credentials and return JWT token",
+    operation_id="login"
+)
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def login_view(request):
+    """
+    User Login endpoint following the sequence diagram flow:
+    1. Validate input
+    2. Authenticate user
+    3. Generate JWT token
+    4. Return success response
+    """
+    try:
+        # Parse and validate request data
+        serializer = LoginRequestSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            # Return validation errors in standard format
+            errors = serializer.errors
+            if 'non_field_errors' in errors:
+                error_data = errors['non_field_errors'][0]
+                return Response(error_data, status=status.HTTP_400_BAD_REQUEST)
+            else:
+                return Response({
+                    'code': 'invalid_request',
+                    'message': 'Invalid input provided.'
+                }, status=status.HTTP_400_BAD_REQUEST)
+
+        # Extract validated data
+        identifier = serializer.validated_data['identifier']
+        password = serializer.validated_data['password']
+
+        # Use authentication service for login flow
+        response_data = AuthenticationService.login(identifier, password)
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
+    except serializers.ValidationError as e:
+        # Handle validation errors from service layer
+        if hasattr(e, 'detail') and isinstance(e.detail, dict):
+            return Response(e.detail, status=status.HTTP_400_BAD_REQUEST)
+        else:
+            return Response({
+                'code': 'invalid_request',
+                'message': 'Invalid request data'
+            }, status=status.HTTP_400_BAD_REQUEST)
+
+    except Exception as e:
+        # Handle unexpected errors
+        return Response({
+            'code': 'server_error',
+            'message': 'An unexpected error occurred'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -31,29 +103,38 @@ class CustomTokenRefreshView(TokenRefreshView):
             )
 
 
+@swagger_auto_schema(
+    method='post',
+    request_body=openapi.Schema(
+        type=openapi.TYPE_OBJECT,
+        properties={}
+    ),
+    responses={
+        200: openapi.Response('Logout successful', SuccessResponseSerializer),
+        400: openapi.Response('Logout failed', ErrorResponseSerializer),
+    },
+    operation_description="Invalidate JWT token and logout user",
+    operation_id="logout"
+)
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
 def logout_view(request):
+    """
+    User Logout endpoint - invalidates JWT token
+    """
     try:
-        refresh_token = request.data.get('refresh_token')
-        if refresh_token:
-            token = RefreshToken(refresh_token)
-            token.blacklist()
-        
-        return Response(
-            {'message': 'Successfully logged out'}, 
-            status=status.HTTP_200_OK
-        )
-    except TokenError:
-        return Response(
-            {'error': 'Invalid refresh token'}, 
-            status=status.HTTP_400_BAD_REQUEST
-        )
+        # For JWT-only implementation, we don't need to blacklist tokens
+        # The frontend should discard the token
+        return Response({
+            'code': 'success',
+            'data': {}
+        }, status=status.HTTP_200_OK)
+
     except Exception as e:
-        return Response(
-            {'error': 'An error occurred during logout'}, 
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+        return Response({
+            'code': 'invalid_request',
+            'message': 'An error occurred during logout'
+        }, status=status.HTTP_400_BAD_REQUEST)
 
 
 @api_view(['GET'])

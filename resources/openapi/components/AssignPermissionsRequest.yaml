@@ -1,0 +1,10 @@
+type: object
+properties:
+  permission_ids:
+    type: array
+    items:
+      type: string
+    description: Array of permission IDs to assign
+    example: ["1", "2", "3"]
+required:
+  - permission_ids

@@ -66,7 +66,7 @@ ROOT_URLCONF = 'auth-service.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates']
+        'DIRS': [BASE_DIR / 'guidelines']
         ,
         'APP_DIRS': True,
         'OPTIONS': {
@@ -170,9 +170,9 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20,
 }
 
-# JWT Settings
+# JWT Settings - configured for OpenAPI specification compliance
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),  # 3600 seconds as per OpenAPI spec
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
@@ -182,6 +182,9 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
     'USER_ID_FIELD': 'id',
     'USER_ID_CLAIM': 'user_id',
+
+    # Custom token payload
+    'TOKEN_OBTAIN_SERIALIZER': 'apps.authentication.serializers.CustomTokenObtainPairSerializer',
 }
 
 # CORS Settings

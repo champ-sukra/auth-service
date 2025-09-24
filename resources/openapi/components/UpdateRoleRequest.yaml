@@ -1,0 +1,14 @@
+type: object
+properties:
+  name:
+    type: string
+    description: Role name
+    example: MANAGER
+  description:
+    type: string
+    description: Role description
+    example: Manager role with limited admin access
+  is_active:
+    type: boolean
+    description: Whether the role is active
+    example: true

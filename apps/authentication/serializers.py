@@ -6,6 +6,59 @@ from apps.users.models import UserRole
 User = get_user_model()
 
 
+class LoginRequestSerializer(serializers.Serializer):
+    identifier = serializers.CharField(
+        max_length=255,
+        help_text="Username or email address"
+    )
+    password = serializers.CharField(
+        write_only=True,
+        style={'input_type': 'password'},
+        help_text="User password"
+    )
+
+    def validate(self, attrs):
+        identifier = attrs.get('identifier')
+        password = attrs.get('password')
+
+        if not identifier or not password:
+            raise serializers.ValidationError(
+                {"code": "invalid_request", "message": "Must include identifier and password."},
+                code='invalid_request'
+            )
+
+        # Try to find user by username or email
+        user = None
+        try:
+            if '@' in identifier:
+                user = User.objects.get(email=identifier)
+            else:
+                user = User.objects.get(username=identifier)
+        except User.DoesNotExist:
+            raise serializers.ValidationError(
+                {"code": "invalid_credentials", "message": "Invalid username or password"},
+                code='invalid_credentials'
+            )
+
+        # Check if user is active
+        if not user.is_active:
+            raise serializers.ValidationError(
+                {"code": "account_disabled", "message": "User's status is inactive."},
+                code='account_disabled'
+            )
+
+        # Authenticate user
+        if user.check_password(password):
+            attrs['user'] = user
+        else:
+            raise serializers.ValidationError(
+                {"code": "invalid_credentials", "message": "Invalid username or password"},
+                code='invalid_credentials'
+            )
+
+        return attrs
+
+
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     @classmethod
     def get_token(cls, user):
@@ -73,3 +126,20 @@ class ChangePasswordSerializer(serializers.Serializer):
         if not user.check_password(value):
             raise serializers.ValidationError("Old password is incorrect")
         return value
+
+
+class ErrorResponseSerializer(serializers.Serializer):
+    code = serializers.CharField(help_text="Machine-readable error code")
+    message = serializers.CharField(help_text="Human-readable error message")
+
+
+class LoginResponseSerializer(serializers.Serializer):
+    access_token = serializers.CharField(help_text="JWT access token")
+    token_type = serializers.CharField(default="Bearer", help_text="Token type")
+    expires_in = serializers.IntegerField(help_text="Token expiration time in seconds")
+    user = serializers.DictField(help_text="User information")
+
+
+class SuccessResponseSerializer(serializers.Serializer):
+    code = serializers.CharField(default="success", help_text="Success code")
+    data = serializers.JSONField(help_text="Response data")

@@ -1,0 +1,41 @@
+type: object
+properties:
+  id:
+    type: string
+    description: User ID
+    example: "1"
+  email:
+    type: string
+    format: email
+    description: User email
+    example: user@example.com
+  firstName:
+    type: string
+    description: User first name
+    example: John
+  lastName:
+    type: string
+    description: User last name
+    example: Doe
+  isActive:
+    type: boolean
+    description: Whether the user account is active
+    example: true
+  createdAt:
+    type: string
+    format: date-time
+    description: Account creation timestamp
+    example: "2023-01-01T00:00:00Z"
+  updatedAt:
+    type: string
+    format: date-time
+    description: Last update timestamp
+    example: "2023-01-01T00:00:00Z"
+required:
+  - id
+  - email
+  - firstName
+  - lastName
+  - isActive
+  - createdAt
+  - updatedAt

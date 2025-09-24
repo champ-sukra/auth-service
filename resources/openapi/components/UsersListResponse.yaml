@@ -1,0 +1,23 @@
+type: object
+properties:
+  users:
+    type: array
+    items:
+      $ref: './ProfileResponse.yaml'
+  total:
+    type: integer
+    description: Total number of users
+    example: 100
+  page:
+    type: integer
+    description: Current page number
+    example: 1
+  page_size:
+    type: integer
+    description: Number of items per page
+    example: 20
+required:
+  - users
+  - total
+  - page
+  - page_size

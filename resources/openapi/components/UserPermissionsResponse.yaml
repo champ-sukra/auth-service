@@ -1,0 +1,8 @@
+type: object
+properties:
+  permissions:
+    type: array
+    items:
+      $ref: './PermissionResponse.yaml'
+required:
+  - permissions

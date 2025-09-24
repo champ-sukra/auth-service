@@ -1,0 +1,10 @@
+type: object
+properties:
+  role_ids:
+    type: array
+    items:
+      type: string
+    description: Array of role IDs to assign
+    example: ["1", "2"]
+required:
+  - role_ids

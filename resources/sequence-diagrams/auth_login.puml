@@ -1,0 +1,71 @@
+@startuml
+'https://plantuml.com/sequence-diagram
+
+Client -> AuthController: login
+AuthController -> AuthController: validateInput
+alt validateInput == false
+    Client <-- AuthController:
+    note right of Client
+    {
+      "code": "invalid_request",
+      "message": "Invalid input provided.",
+      "data": null
+    }
+    end note
+end
+AuthController -> AuthService: authenticateUser
+AuthService -> UserRepository: findByIdentifier
+UserRepository --> AuthService: user
+alt user == null
+    Client <-- AuthService:
+    note right of Client
+    {
+      "code": "resource_not_found",
+      "message": "No user is found."
+    }
+    end note
+end
+alt user's status == inactive
+    Client <-- AuthService:
+    note right of Client
+    {
+      "code": "account_disabled",
+      "message": "User's status is inactive."
+    }
+    end note
+end
+
+AuthService -> AuthService: validatePassword
+alt password invalid
+    Client <-- AuthService:
+    note right of Client
+    {
+      "code": "invalid_credentials",
+      "message": "Invalid username or password"
+    }
+    end note
+end
+AuthService -> AuthService: generateJWTToken
+AuthService -> UserRepository: getUserRoles
+UserRepository --> AuthService: roles
+Client <-- AuthService:
+note right of Client
+{
+  "code": "success",
+  "data": {
+      "access_token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
+      "token_type": "Bearer",
+      "expires_in": 3600,
+      "user": {
+        "id": 1,
+        "username": "john_doe",
+        "email": "john@example.com",
+        "first_name": "John",
+        "last_name": "Doe",
+        "roles": ["ADMIN"]
+      }
+  }
+}
+end note
+
+@enduml

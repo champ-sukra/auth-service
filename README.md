@@ -147,3 +147,6 @@ curl http://localhost:8000/api/auth/login/
 - ✅ Docker deployment ready
 - ✅ Comprehensive test coverage
 - ✅ Admin interface included
+
+## Code Standard
+- Jira Confluence Page URL -- Django 

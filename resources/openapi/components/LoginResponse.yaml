@@ -1,0 +1,38 @@
+type: object
+properties:
+  access_token:
+    type: string
+    description: JWT access token
+    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+  token_type:
+    type: string
+    description: Token type
+    example: Bearer
+  expires_in:
+    type: integer
+    description: Token expiration time in seconds
+    example: 3600
+  user:
+    type: object
+    properties:
+      id:
+        type: string
+        description: User ID
+        example: "1"
+      email:
+        type: string
+        description: User email
+        example: admin@example.com
+      fullname:
+        type: string
+        description: User full name
+        example: "Admin User"
+    required:
+      - id
+      - email
+      - fullname
+required:
+  - access_token
+  - token_type
+  - expires_in
+  - user

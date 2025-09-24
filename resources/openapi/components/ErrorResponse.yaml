@@ -1,0 +1,28 @@
+type: object
+properties:
+  code:
+    type: string
+    description: Machine-readable error code
+    enum:
+      # REQUEST domain errors - malformed/missing data
+      - invalid_request
+      # CREDENTIALS domain errors - authentication/authorization
+      - invalid_credentials
+      - unauthorized_access
+      # ACCOUNT domain errors - account state issues
+      - account_disabled
+      - account_expired
+      - account_protected
+      # PROFILE domain errors - data conflicts/resources
+      - duplicate_resource
+      - resource_not_found
+      - resource_in_use
+  message:
+    type: string
+    description: Human-readable error message
+required:
+  - code
+  - message
+example:
+  code: invalid_credentials
+  message: Invalid username or password

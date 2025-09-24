@@ -1,0 +1,18 @@
+type: object
+properties:
+  name:
+    type: string
+    description: Permission name
+    example: user.write
+  codename:
+    type: string
+    description: Permission codename
+    example: write_user
+  description:
+    type: string
+    description: Permission description
+    example: Can create and update user data
+required:
+  - name
+  - codename
+  - description

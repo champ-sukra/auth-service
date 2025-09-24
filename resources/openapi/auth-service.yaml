@@ -1,0 +1,1035 @@
+openapi: 3.0.3
+info:
+  title: Auth Service API
+  description: Authentication and authorization microservice providing JWT-based authentication, user management, and role-based access control (RBAC)
+  version: 1.0.0
+  contact:
+    name: Auth Service Team
+    email: support@authservice.com
+
+servers:
+  - url: http://localhost:8000
+    description: Development server
+  - url: https://api.authservice.com
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication operations
+  - name: Profile
+    description: User profile management
+  - name: Password
+    description: Password management operations
+  - name: Roles
+    description: Role management operations (Admin only)
+  - name: Permissions
+    description: Permission management operations (Admin only)
+  - name: User Management
+    description: User role and permission assignment (Admin only)
+
+security:
+  - bearerAuth: []
+
+paths:
+  /v1/auth/login:
+    post:
+      tags: [Authentication]
+      summary: User Login
+      description: Authenticate user with credentials and return JWT token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components/LoginRequest.yaml'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    $ref: './components/LoginResponse.yaml'
+        '400':
+          description: Login failed
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+  /v1/auth/logout:
+    post:
+      tags: [Authentication]
+      summary: User Logout
+      description: Invalidate JWT token and logout user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties: {}
+        '400':
+          description: Logout failed
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+  /v1/auth/profile:
+    get:
+      tags: [Profile]
+      summary: Get User Profile
+      description: Get current authenticated user's profile information
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    $ref: './components/ProfileResponse.yaml'
+        '400':
+          description: Profile access failed
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+    put:
+      tags: [Profile]
+      summary: Update User Profile
+      description: Update current authenticated user's profile information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components/UpdateProfileRequest.yaml'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    $ref: './components/UpdateProfileResponse.yaml'
+        '400':
+          description: Profile update failed
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+  /v1/auth/profiles:
+    get:
+      tags: [Profile]
+      summary: Admin List Users
+      description: Get paginated list of all users (Admin only)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: ordering
+          in: query
+          schema:
+            type: string
+            enum: [id, email, firstName, lastName, createdAt, -id, -email, -firstName, -lastName, -createdAt]
+        - name: email
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Users list retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    $ref: './components/UsersListResponse.yaml'
+        '400':
+          description: Access denied or invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+  /v1/auth/password-reset:
+    post:
+      tags: [Password]
+      summary: Request Password Reset
+      description: Send password reset email to user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components/PasswordResetRequest.yaml'
+      responses:
+        '200':
+          description: Password reset email sent (always returns 200 to prevent email enumeration)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties: {}
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+  /v1/auth/password-reset/confirm:
+    post:
+      tags: [Password]
+      summary: Confirm Password Reset
+      description: Confirm password reset with token and set new password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components/PasswordResetConfirmRequest.yaml'
+      responses:
+        '200':
+          description: Password reset confirmed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties: {}
+        '400':
+          description: Invalid token or request
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+  /v1/auth/change-password:
+    post:
+      tags: [Password]
+      summary: Change Password
+      description: Change authenticated user's password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components/ChangePasswordRequest.yaml'
+      responses:
+        '200':
+          description: Password changed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties: {}
+        '400':
+          description: Password change failed
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+  /v1/auth/user/roles:
+    get:
+      tags: [User Management]
+      summary: Get My Roles
+      description: Get current user's assigned roles
+      responses:
+        '200':
+          description: User roles retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    $ref: './components/UserRolesResponse.yaml'
+        '400':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+  /v1/auth/user/permissions:
+    get:
+      tags: [User Management]
+      summary: Get My Permissions
+      description: Get current user's effective permissions
+      responses:
+        '200':
+          description: User permissions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    $ref: './components/UserPermissionsResponse.yaml'
+        '400':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+  /v1/auth/roles:
+    get:
+      tags: [Roles]
+      summary: List Roles
+      description: Get all roles (Admin only)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Roles retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    $ref: './components/RolesListResponse.yaml'
+        '400':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+    post:
+      tags: [Roles]
+      summary: Create Role
+      description: Create a new role (Admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components/CreateRoleRequest.yaml'
+      responses:
+        '200':
+          description: Role created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    $ref: './components/RoleResponse.yaml'
+        '400':
+          description: Role creation failed
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+  /v1/auth/roles/{id}:
+    get:
+      tags: [Roles]
+      summary: Get Role
+      description: Get specific role by ID (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Role retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    $ref: './components/RoleResponse.yaml'
+        '400':
+          description: Access denied or role not found
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+    put:
+      tags: [Roles]
+      summary: Update Role
+      description: Update existing role (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components/UpdateRoleRequest.yaml'
+      responses:
+        '200':
+          description: Role updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    $ref: './components/RoleResponse.yaml'
+        '400':
+          description: Role update failed
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+    delete:
+      tags: [Roles]
+      summary: Delete Role
+      description: Delete existing role (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Role deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties: {}
+        '400':
+          description: Role deletion failed
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+  /v1/auth/permissions:
+    get:
+      tags: [Permissions]
+      summary: List Permissions
+      description: Get all permissions (Admin only)
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Permissions retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    $ref: './components/PermissionsListResponse.yaml'
+        '400':
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+    post:
+      tags: [Permissions]
+      summary: Create Permission
+      description: Create a new permission (Admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components/CreatePermissionRequest.yaml'
+      responses:
+        '200':
+          description: Permission created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    $ref: './components/PermissionResponse.yaml'
+        '400':
+          description: Permission creation failed
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+  /v1/auth/permissions/{id}:
+    get:
+      tags: [Permissions]
+      summary: Get Permission
+      description: Get specific permission by ID (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Permission retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    $ref: './components/PermissionResponse.yaml'
+        '400':
+          description: Access denied or permission not found
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+    put:
+      tags: [Permissions]
+      summary: Update Permission
+      description: Update existing permission (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components/UpdatePermissionRequest.yaml'
+      responses:
+        '200':
+          description: Permission updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    $ref: './components/PermissionResponse.yaml'
+        '400':
+          description: Permission update failed
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+    delete:
+      tags: [Permissions]
+      summary: Delete Permission
+      description: Delete existing permission (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Permission deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    type: object
+                    properties: {}
+        '400':
+          description: Permission deletion failed
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+  /v1/auth/users/{id}/roles:
+    post:
+      tags: [User Management]
+      summary: Assign User Roles
+      description: Assign roles to a user (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components/AssignRolesRequest.yaml'
+      responses:
+        '200':
+          description: Roles assigned successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    $ref: './components/UserRolesResponse.yaml'
+        '400':
+          description: Role assignment failed
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+    delete:
+      tags: [User Management]
+      summary: Remove User Roles
+      description: Remove roles from a user (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components/AssignRolesRequest.yaml'
+      responses:
+        '200':
+          description: Roles removed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    $ref: './components/UserRolesResponse.yaml'
+        '400':
+          description: Role removal failed
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+  /v1/auth/users/{id}/permissions:
+    post:
+      tags: [User Management]
+      summary: Assign User Permissions
+      description: Assign permissions directly to a user (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components/AssignPermissionsRequest.yaml'
+      responses:
+        '200':
+          description: Permissions assigned successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    $ref: './components/UserPermissionsResponse.yaml'
+        '400':
+          description: Permission assignment failed
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+  /v1/auth/roles/{id}/permissions:
+    post:
+      tags: [User Management]
+      summary: Assign Role Permissions
+      description: Assign permissions to a role (Admin only)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: './components/AssignPermissionsRequest.yaml'
+      responses:
+        '200':
+          description: Permissions assigned to role successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  code:
+                    type: string
+                    example: success
+                  data:
+                    $ref: './components/RolePermissionsResponse.yaml'
+        '400':
+          description: Permission assignment failed
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: './components/ErrorResponse.yaml'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    # Reference all component schemas
+    LoginRequest:
+      $ref: './components/LoginRequest.yaml'
+    LoginResponse:
+      $ref: './components/LoginResponse.yaml'
+    ProfileResponse:
+      $ref: './components/ProfileResponse.yaml'
+    UpdateProfileRequest:
+      $ref: './components/UpdateProfileRequest.yaml'
+    UpdateProfileResponse:
+      $ref: './components/UpdateProfileResponse.yaml'
+    UsersListResponse:
+      $ref: './components/UsersListResponse.yaml'
+    PasswordResetRequest:
+      $ref: './components/PasswordResetRequest.yaml'
+    PasswordResetConfirmRequest:
+      $ref: './components/PasswordResetConfirmRequest.yaml'
+    ChangePasswordRequest:
+      $ref: './components/ChangePasswordRequest.yaml'
+    UserRolesResponse:
+      $ref: './components/UserRolesResponse.yaml'
+    UserPermissionsResponse:
+      $ref: './components/UserPermissionsResponse.yaml'
+    RolesListResponse:
+      $ref: './components/RolesListResponse.yaml'
+    CreateRoleRequest:
+      $ref: './components/CreateRoleRequest.yaml'
+    UpdateRoleRequest:
+      $ref: './components/UpdateRoleRequest.yaml'
+    RoleResponse:
+      $ref: './components/RoleResponse.yaml'
+    PermissionsListResponse:
+      $ref: './components/PermissionsListResponse.yaml'
+    CreatePermissionRequest:
+      $ref: './components/CreatePermissionRequest.yaml'
+    UpdatePermissionRequest:
+      $ref: './components/UpdatePermissionRequest.yaml'
+    PermissionResponse:
+      $ref: './components/PermissionResponse.yaml'
+    AssignRolesRequest:
+      $ref: './components/AssignRolesRequest.yaml'
+    AssignPermissionsRequest:
+      $ref: './components/AssignPermissionsRequest.yaml'
+    RolePermissionsResponse:
+      $ref: './components/RolePermissionsResponse.yaml'
+    ErrorResponse:
+      $ref: './components/ErrorResponse.yaml'
+    User:
+      $ref: './components/User.yaml'
+    Role:
+      $ref: './components/Role.yaml'
+    Permission:
+      $ref: './components/Permission.yaml'
